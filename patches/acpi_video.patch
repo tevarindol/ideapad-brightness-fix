@@ -1,0 +1,34 @@
+--- a/sys/dev/acpica/acpi_video.c
++++ b/sys/dev/acpica/acpi_video.c
+@@ -1017,9 +1017,12 @@
+ 	UINT32 adr, val;
+ 	struct enum_callback_arg *argset;
+ 	size_t i;
++	int matched; 
++        ACPI_HANDLE bclh;
+ 
+ 	ACPI_SERIAL_ASSERT(video);
+ 	argset = context;
++	matched = 0;
+ 	status = acpi_GetInteger(handle, "_ADR", &adr);
+ 	if (ACPI_FAILURE(status))
+ 		return (AE_OK);
+@@ -1030,9 +1033,18 @@
+ 		    (adr & DOD_DEVID_MASK_FULL)) {
+ 			argset->callback(handle, val, argset->context);
+ 			argset->count++;
++			matched = 1;
+ 		}
+ 	}
+ 
++	if (!matched &&
++	    ((adr & DOD_DEVID_MASK) == DOD_DEVID_INTDFP ||
++	    (adr & DOD_DEVID_MASK_FULL) == DOD_DEVID_LCD) &&
++	    ACPI_SUCCESS(AcpiGetHandle(handle, "_BCL", &bclh))) {
++		argset->callback(handle, adr, argset->context);
++		argset->count++;
++	}
++
+ 	return (AE_OK);
+ }
+ 
