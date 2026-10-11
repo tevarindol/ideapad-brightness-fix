@@ -10,6 +10,9 @@ permissions:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        freebsd-version: ['15.1']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -21,10 +24,29 @@ jobs:
           prepare: |
             pkg install -y git
           run: |
-            make build
+            make build BRANCH="releng/${{ matrix.freebsd-version }}"
+
+      - name: Rename artifact
+        run: cp acpi_video.ko "acpi_video-${{ matrix.freebsd-version }}.ko"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: acpi_video-${{ matrix.freebsd-version }}
+          path: acpi_video-${{ matrix.freebsd-version }}.ko
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: acpi_video-*
+          merge-multiple: true
 
       - name: Create release
         uses: softprops/action-gh-release@v3
         with:
-          files: acpi_video.ko
+          files: acpi_video-*.ko
           generate_release_notes: true
