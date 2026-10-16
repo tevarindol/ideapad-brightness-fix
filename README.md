@@ -32,6 +32,10 @@ make install    # copy to /boot/modules/ (needs root)
 make distclean  # remove source tree and build artifacts
 ```
 
+`make build` configures the module against the GENERIC kernel config (`config(8)` +
+`KERNBUILDDIR`), so the `.ko` carries the same kernel options as the stock one —
+including evdev support, which the brightness hotkeys need.
+
 To build against a different FreeBSD branch:
 ```
 make build BRANCH=releng/14.2
